@@ -1,0 +1,45 @@
+spring:
+  application:
+    name: taiyi-test
+  
+  # 测试数据库配置
+  datasource:
+    url: jdbc:h2:mem:testdb
+    username: sa
+    password: 
+    driver-class-name: org.h2.Driver
+    
+  # JPA配置
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+        format_sql: true
+        
+  # H2控制台
+  h2:
+    console:
+      enabled: true
+      
+# JWT配置
+jwt:
+  secret: test-secret-key-for-jwt-token-generation-2024
+  expiration: 86400000
+  
+# 隧道配置
+tunnel:
+  port-range:
+    start: 20000
+    end: 21000
+  max-connections: 100
+  heartbeat-interval: 10
+  
+# 日志配置
+logging:
+  level:
+    io.github.charlie237.taiyi: DEBUG
+    org.springframework.security: INFO
+    org.hibernate.SQL: DEBUG

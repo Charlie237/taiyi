@@ -1,0 +1,109 @@
+spring:
+  application:
+    name: taiyi
+  
+  # 数据库配置
+  datasource:
+    url: jdbc:mysql://localhost:3306/taiyi?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useServerPrepStmts=false&rewriteBatchedStatements=true
+    username: root
+    password: ILYabc123
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    
+  # JPA配置
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+        format_sql: true
+        
+  # Jackson配置
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: GMT+8
+    
+# 服务器配置
+server:
+  port: 8080
+  servlet:
+    context-path: /api
+    
+# JWT配置
+jwt:
+  secret: taiyi-secret-key-for-jwt-token-generation-2024
+  expiration: 86400000 # 24小时
+  
+# 内网穿透配置
+tunnel:
+  # 隧道端口范围
+  port-range:
+    start: 10000
+    end: 20000
+  # 最大连接数
+  max-connections: 1000
+  # 心跳间隔（秒）
+  heartbeat-interval: 30
+  
+# 日志配置
+logging:
+  level:
+    io.github.charlie237.taiyi: DEBUG
+    org.springframework.security: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+    
+# Swagger配置
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    tags-sorter: alpha
+    operations-sorter: alpha
+
+# Actuator配置
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: when-authorized
+    prometheus:
+      enabled: true
+
+# 太乙系统增强配置
+taiyi:
+  rate-limit:
+    enabled: true
+    api:
+      capacity: 100
+      refill-period: PT1M
+    login:
+      capacity: 5
+      refill-period: PT1M
+      lock-duration: PT15M
+    web-socket:
+      capacity: 10
+      refill-period: PT1M
+
+  monitoring:
+    enabled: true
+    metrics-enabled: true
+    health-check-enabled: true
+    metrics-interval: PT30S
+
+  security:
+    cors-enabled: true
+    allowed-origins: "*"
+    csrf-enabled: false
+    password:
+      min-length: 6
+      max-length: 20
+      require-uppercase: false
+      require-lowercase: false
+      require-digits: true
+      require-special-chars: false
