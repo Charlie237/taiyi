@@ -1,8 +1,10 @@
 package io.github.charlie237.taiyi.websocket;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.charlie237.taiyi.common.Constants;
 import io.github.charlie237.taiyi.service.NodeService;
+import io.github.charlie237.taiyi.service.NodeStatusService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -19,8 +21,9 @@ import java.util.concurrent.ConcurrentHashMap;
 @Component
 @RequiredArgsConstructor
 public class NodeWebSocketHandler implements WebSocketHandler {
-    
+
     private final NodeService nodeService;
+    private final NodeStatusService nodeStatusService;
     private final ObjectMapper objectMapper = new ObjectMapper();
     
     // 存储节点连接
@@ -53,7 +56,7 @@ public class NodeWebSocketHandler implements WebSocketHandler {
         
         try {
             String payload = message.getPayload().toString();
-            Map<String, Object> messageData = objectMapper.readValue(payload, Map.class);
+            Map<String, Object> messageData = objectMapper.readValue(payload, new TypeReference<Map<String, Object>>() {});
             String messageType = (String) messageData.get("type");
             
             log.debug("收到节点消息: {} - {}", nodeId, messageType);
@@ -64,6 +67,15 @@ public class NodeWebSocketHandler implements WebSocketHandler {
                     break;
                 case Constants.MessageType.STATUS_UPDATE:
                     handleStatusUpdate(nodeId, messageData);
+                    break;
+                case "hardware_status":
+                    handleHardwareStatus(nodeId, messageData);
+                    break;
+                case "data_response":
+                    handleDataResponse(nodeId, messageData);
+                    break;
+                case "connection_response":
+                    handleConnectionResponse(nodeId, messageData);
                     break;
                 default:
                     log.warn("未知消息类型: {}", messageType);
@@ -139,11 +151,32 @@ public class NodeWebSocketHandler implements WebSocketHandler {
                 Integer connections = (Integer) data.get("connections");
                 Long bytesIn = ((Number) data.get("bytesIn")).longValue();
                 Long bytesOut = ((Number) data.get("bytesOut")).longValue();
-                
+
                 nodeService.updateNodeStats(nodeId, connections, bytesIn, bytesOut);
             }
         } catch (Exception e) {
             log.error("处理状态更新失败: {}", e.getMessage());
+        }
+    }
+
+    /**
+     * 处理硬件状态消息
+     */
+    private void handleHardwareStatus(String nodeId, Map<String, Object> messageData) {
+        try {
+            Map<String, Object> data = (Map<String, Object>) messageData.get("data");
+            if (data != null) {
+                // 记录节点硬件状态
+                nodeStatusService.recordNodeStatus(nodeId, data);
+
+                // 发送确认消息
+                WebSocketSession session = nodeSessions.get(nodeId);
+                if (session != null && session.isOpen()) {
+                    sendMessage(session, createMessage("hardware_status_ack", "硬件状态已记录", null));
+                }
+            }
+        } catch (Exception e) {
+            log.error("处理硬件状态失败: {}", e.getMessage());
         }
     }
     
@@ -217,6 +250,46 @@ public class NodeWebSocketHandler implements WebSocketHandler {
         return null;
     }
     
+    /**
+     * 处理数据响应（从内网节点返回的数据）
+     */
+    private void handleDataResponse(String nodeId, Map<String, Object> messageData) {
+        try {
+            Map<String, Object> data = (Map<String, Object>) messageData.get("data");
+            if (data != null) {
+                String connectionId = (String) data.get("connectionId");
+                byte[] responseData = (byte[]) data.get("data");
+
+                if (connectionId != null && responseData != null) {
+                    log.debug("处理数据响应: 连接ID={}, 数据长度={}", connectionId, responseData.length);
+                    // zrok会自动处理数据转发，这里只需要记录日志
+                }
+            }
+        } catch (Exception e) {
+            log.error("处理数据响应失败: {}", e.getMessage());
+        }
+    }
+
+    /**
+     * 处理连接响应
+     */
+    private void handleConnectionResponse(String nodeId, Map<String, Object> messageData) {
+        try {
+            Map<String, Object> data = (Map<String, Object>) messageData.get("data");
+            if (data != null) {
+                String connectionId = (String) data.get("connectionId");
+                String action = (String) data.get("action");
+
+                if ("close".equals(action) && connectionId != null) {
+                    log.debug("处理连接关闭响应: 连接ID={}", connectionId);
+                    // zrok会自动处理连接关闭，这里只需要记录日志
+                }
+            }
+        } catch (Exception e) {
+            log.error("处理连接响应失败: {}", e.getMessage());
+        }
+    }
+
     /**
      * 获取在线节点数量
      */

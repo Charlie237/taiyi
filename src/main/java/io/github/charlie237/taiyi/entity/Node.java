@@ -7,11 +7,13 @@ import lombok.EqualsAndHashCode;
 import java.time.LocalDateTime;
 
 /**
- * 内网客户端节点实体类
+ * zrok边缘节点实体类
+ * 代表部署了zrok边缘服务的公网服务器，连接到太乙控制中心的zrok控制器
+ * 负责实际的隧道数据转发和用户连接处理
  */
 @Data
 @Entity
-@Table(name = "client_nodes")
+@Table(name = "server_nodes")
 @EqualsAndHashCode(callSuper = false)
 public class Node {
     

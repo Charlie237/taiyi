@@ -2,7 +2,10 @@ package io.github.charlie237.taiyi.repository;
 
 import io.github.charlie237.taiyi.entity.Node;
 import io.github.charlie237.taiyi.entity.NodeStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -31,6 +34,17 @@ public interface NodeStatusRepository extends JpaRepository<NodeStatus, Long> {
      * 查找节点的最新状态记录
      */
     Optional<NodeStatus> findTopByNodeOrderByRecordedAtDesc(Node node);
+
+    /**
+     * 根据节点查找最新状态（用于NodeStatusService）
+     */
+    @Query("SELECT ns FROM NodeStatus ns WHERE ns.node = :node ORDER BY ns.recordedAt DESC LIMIT 1")
+    Optional<NodeStatus> findLatestByNode(@Param("node") Node node);
+
+    /**
+     * 根据节点查找状态历史（按时间倒序，分页）
+     */
+    Page<NodeStatus> findByNodeOrderByRecordedAtDesc(Node node, Pageable pageable);
     
     /**
      * 查找指定时间范围内的状态记录
@@ -79,7 +93,9 @@ public interface NodeStatusRepository extends JpaRepository<NodeStatus, Long> {
     /**
      * 删除指定时间前的状态记录
      */
-    void deleteByRecordedAtBefore(LocalDateTime dateTime);
+    @Modifying
+    @Query("DELETE FROM NodeStatus ns WHERE ns.recordedAt < :cutoffTime")
+    int deleteByRecordedAtBefore(@Param("cutoffTime") LocalDateTime cutoffTime);
     
     /**
      * 查找节点的平均CPU使用率

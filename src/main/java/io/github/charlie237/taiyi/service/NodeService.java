@@ -247,4 +247,40 @@ public class NodeService {
     public long countByUser(User user) {
         return nodeRepository.countByUser(user);
     }
+
+    /**
+     * 获取所有节点（分页）
+     */
+    public Page<Node> getAllNodes(Pageable pageable) {
+        return nodeRepository.findAll(pageable);
+    }
+
+    /**
+     * 获取在线节点列表
+     */
+    public List<Node> getOnlineNodes() {
+        return nodeRepository.findByStatus(Node.Status.ONLINE);
+    }
+
+    /**
+     * 更新节点信息
+     */
+    @Transactional
+    public Node updateNode(Node node) {
+        return nodeRepository.save(node);
+    }
+
+    /**
+     * 删除节点
+     */
+    @Transactional
+    public boolean deleteNode(String nodeId) {
+        Optional<Node> nodeOpt = nodeRepository.findByNodeId(nodeId);
+        if (nodeOpt.isPresent()) {
+            nodeRepository.delete(nodeOpt.get());
+            log.info("删除节点: {}", nodeId);
+            return true;
+        }
+        return false;
+    }
 }

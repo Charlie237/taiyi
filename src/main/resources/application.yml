@@ -107,3 +107,16 @@ taiyi:
       require-lowercase: false
       require-digits: true
       require-special-chars: false
+
+# zrok集成配置
+zrok:
+  api:
+    base-url: http://localhost:18080
+    token: ""
+  binary:
+    path: /usr/local/bin/zrok
+  controller:
+    enabled: true
+    port: 18080
+  environment:
+    name: taiyi-env

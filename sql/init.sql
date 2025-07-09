@@ -105,8 +105,34 @@ CREATE TABLE IF NOT EXISTS node_status (
     INDEX idx_recorded_at (recorded_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='节点状态表';
 
+-- API Token表
+CREATE TABLE IF NOT EXISTS api_tokens (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT NOT NULL,
+    token VARCHAR(128) NOT NULL UNIQUE COMMENT 'API访问令牌',
+    token_name VARCHAR(100) COMMENT 'Token名称',
+    token_secret VARCHAR(64) NOT NULL COMMENT 'Token密钥',
+    status ENUM('ACTIVE', 'EXPIRED', 'SUSPENDED', 'REVOKED') DEFAULT 'ACTIVE',
+    plan ENUM('FREE', 'BASIC', 'PRO', 'ENTERPRISE') DEFAULT 'FREE',
+    max_tunnels INT DEFAULT 2 COMMENT '最大隧道数',
+    max_bandwidth BIGINT DEFAULT 1048576 COMMENT '最大带宽(bytes/s)',
+    max_traffic_monthly BIGINT DEFAULT 1073741824 COMMENT '最大月流量(bytes)',
+    max_connections INT DEFAULT 10 COMMENT '最大并发连接数',
+    traffic_used BIGINT DEFAULT 0 COMMENT '已使用流量',
+    traffic_reset_at DATETIME COMMENT '流量重置时间',
+    last_used_at DATETIME COMMENT '最后使用时间',
+    expires_at DATETIME COMMENT '过期时间',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_user_id (user_id),
+    INDEX idx_token (token),
+    INDEX idx_status (status),
+    INDEX idx_expires_at (expires_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='API Token表';
+
 -- 插入默认管理员用户
-INSERT IGNORE INTO users (username, password, email, real_name, role, status) 
+INSERT IGNORE INTO users (username, password, email, real_name, role, status)
 VALUES ('admin', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iKTVEFDa', 'admin@taiyi.com', '系统管理员', 'ADMIN', 'ACTIVE');
 
 SET FOREIGN_KEY_CHECKS = 1;

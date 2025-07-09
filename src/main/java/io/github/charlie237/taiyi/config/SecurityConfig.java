@@ -1,6 +1,7 @@
 package io.github.charlie237.taiyi.config;
 
 import io.github.charlie237.taiyi.filter.RateLimitFilter;
+import io.github.charlie237.taiyi.security.ApiTokenAuthenticationFilter;
 import io.github.charlie237.taiyi.security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -30,6 +31,7 @@ import java.util.Arrays;
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final ApiTokenAuthenticationFilter apiTokenAuthenticationFilter;
     private final RateLimitFilter rateLimitFilter;
     
     @Bean
@@ -50,6 +52,11 @@ public class SecurityConfig {
                         .requestMatchers("/ws/**").permitAll()
                         .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**", "/swagger-resources/**", "/webjars/**").permitAll()
                         .requestMatchers("/actuator/**").permitAll()
+                        // API Token接口（支持Token认证）
+                        .requestMatchers("/api/tunnels/**").hasAnyRole("USER", "API_USER")
+                        .requestMatchers("/api/nodes/**").hasAnyRole("USER", "API_USER")
+                        .requestMatchers("/api/routes/**").hasAnyRole("USER", "API_USER")
+                        .requestMatchers("/api-tokens/**").hasRole("USER")
                         // 管理员接口
                         .requestMatchers("/admin/**").hasRole("ADMIN")
                         .requestMatchers("/monitoring/**").hasRole("ADMIN")
@@ -57,6 +64,7 @@ public class SecurityConfig {
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(rateLimitFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(apiTokenAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
         
         return http.build();

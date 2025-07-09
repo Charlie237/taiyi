@@ -38,6 +38,11 @@ public class TaiyiProperties {
      * 安全配置
      */
     private Security security = new Security();
+
+    /**
+     * zrok集成配置
+     */
+    private Zrok zrok = new Zrok();
     
     @Data
     public static class Jwt {
@@ -112,6 +117,43 @@ public class TaiyiProperties {
             private boolean requireLowercase = false;
             private boolean requireDigits = true;
             private boolean requireSpecialChars = false;
+        }
+    }
+
+    @Data
+    public static class Zrok {
+        private Api api = new Api();
+        private Binary binary = new Binary();
+        private Controller controller = new Controller();
+        private Environment environment = new Environment();
+
+        @Data
+        public static class Api {
+            private String baseUrl = "http://localhost:18080";
+            private String token = "";
+            private int timeout = 30000; // 30秒超时
+        }
+
+        @Data
+        public static class Binary {
+            private String path = "/usr/local/bin/zrok";
+            private boolean autoDownload = false;
+            private String version = "latest";
+        }
+
+        @Data
+        public static class Controller {
+            private boolean enabled = true;
+            private int port = 18080;
+            private String bindAddress = "0.0.0.0";
+            private boolean autoStart = true;
+        }
+
+        @Data
+        public static class Environment {
+            private String name = "taiyi-env";
+            private boolean autoEnable = true;
+            private String configPath = "~/.zrok";
         }
     }
 }
